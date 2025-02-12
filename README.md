@@ -4,6 +4,7 @@ AEV-PLIG is a GNN-based scoring function that predicts the binding affinity of a
 
 AEV-PLIG was first published in [How to make machine learning scoring functions competitive with FEP](https://chemrxiv.org/engage/chemrxiv/article-details/6675a38d5101a2ffa8274f62), and received the [people's poster prize at the 7th AI in Chemistry Symposium](https://www.stats.ox.ac.uk/news/isak-valsson-wins-poster-prize). In the paper we benchmark AEV-PLIG on a wide range of benchmarks, including CASF-2016, our new out-of-distribution benchmark OOD Test, and a test set used for free energy perturbation (FEP) calculations, and highlight competitive performance accross the board. Moreover, we demonstrate how leveraging augmented data (generated using template-based modelling or molecular docking) can significantly improve binding affinity prediction correlation and ranking on the FEP benchmark (PCC and Kendall’s increases from 0.41 and 0.26, to 0.59 and 0.42), closing the performance gap with FEP calculations while being 400,000 times faster.
 
+
 In this repo we demonstrate how to use AEV-PLIG for predictions and how to train your own AEV-PLIG model
 
 - [Installation guide](#installation-guide)
@@ -12,6 +13,7 @@ In this repo we demonstrate how to use AEV-PLIG for predictions and how to train
 ## Installation guide
 AEV-PLIG has been tested on the following systems:
 + macOS: Monterey (12.5.1)
++ Linux: Ubuntu 22.04.5 LTS
 
 ### Create conda environment
 Installation times may vary, but took around 30 seconds on Mac M1.
@@ -27,13 +29,8 @@ Install packages manually:
 ```
 conda create --name aev-plig python=3.8
 conda activate aev-plig
-pip install torch torchvision torchaudio
-pip install torch-scatter
-pip install torch_geometric
-pip install rdkit
-pip install torchani
-pip install qcelemental
-pip install pandas
+pip install torch torchvision torchaudio torch-scatter torch_geometric rdkit torchani qcelemental pandas biopandas scikit-learn
+
 ```
 
 ## Demo
