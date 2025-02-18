@@ -14,6 +14,8 @@ from torch_geometric.loader import DataLoader
 from helpers import model_dict
 import argparse
 import time
+import sys
+
 from concurrent.futures import ProcessPoolExecutor, as_completed 
 
 def elements_to_atomicnums(elements):
@@ -542,7 +544,10 @@ def get_device(device_param):
         return torch.device("cpu")
     else:
         # Assume the user provided a valid CUDA device index
-        return torch.device(f"cuda:{device_param}")
+        if int(device_param) >= torch.cuda.device_count():
+            sys.exit(f"The CUDA device {device_param} doesn't seem to exist!")
+        else:
+            return torch.device(f"cuda:{device_param}")
 
 if __name__ == "__main__":    
     config = parse_args()
