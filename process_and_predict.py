@@ -1,8 +1,7 @@
 import pandas as pd
 import pickle
 import torch
-import torchani
-import torchani_mod
+
 import qcelemental as qcel
 import numpy as np
 from tqdm import tqdm
@@ -15,8 +14,20 @@ from helpers import model_dict
 import argparse
 import time
 import sys
-
+import warnings
 from concurrent.futures import ProcessPoolExecutor, as_completed 
+
+import multiprocessing
+from functools import partial
+
+
+# Suppress Torchani warnings
+warnings.filterwarnings("ignore", message="cuaev not installed")
+warnings.filterwarnings("ignore", message="Dependency not satisfied, torchani.ase will not be available")
+warnings.filterwarnings("ignore", message="Dependency not satisfied, torchani.data will not be available")
+
+import torchani
+import torchani_mod
 
 def elements_to_atomicnums(elements):
     atomicnums = np.zeros(len(elements), dtype=int)
@@ -262,6 +273,14 @@ def predict(model, device, loader, y_scaler=None):
 
     return total_graph_ids.cpu().numpy().flatten(), y_scaler.inverse_transform(total_preds.cpu().detach().numpy().flatten().reshape(-1,1)).flatten()
 
+ # Define a helper function to validate a single row.
+def validate_row(row, atom_keys):
+    try:
+        # Try loading the PDB file.
+        LoadPDBasDF(row["pdb_file"], atom_keys)
+        return None  # Return None if no exception occurs.
+    except Exception:
+        return row["unique_id"]  # Return the unique id on failure.
 
 def process_data(config):
 
@@ -298,19 +317,33 @@ def process_data(config):
     """
     Check what protein structures are readible by Biopandas
     """
-    print("Checking what protein structures are readible by Biopandas\n")
-    atom_keys = pd.read_csv("data/PDB_Atom_Keys.csv", sep=",")
-    atom_keys["RESIDUE"] = atom_keys["PDB_ATOM"].apply(lambda x: x.split("-")[0])
-    non_readable = []
-    for index, row in tqdm(df.iterrows(), total=df.shape[0]):
-        try:
-            LoadPDBasDF(row["pdb_file"], atom_keys)
-        except:
-            non_readable.append(row["unique_id"])
+    if not config.skip_validation:
 
-    print("Number of pdb files not read by Biopandas:",len(non_readable))
-    df = df[~df["unique_id"].isin(non_readable)].reset_index(drop=True)
-    print("\n")
+        print("Checking what protein structures are readible by Biopandas\n")
+        atom_keys = pd.read_csv("data/PDB_Atom_Keys.csv", sep=",")
+        atom_keys["RESIDUE"] = atom_keys["PDB_ATOM"].apply(lambda x: x.split("-")[0])
+
+
+        # Convert dataframe rows to a list of dictionaries (or use .to_dict("records"))
+        rows = df.to_dict("records")
+
+        # Use a partial function to pass the atom_keys variable to the validate_row function
+        validate_with_keys = partial(validate_row, atom_keys=atom_keys)
+    
+        # Process the rows in parallel using ProcessPoolExecutor.
+        with ProcessPoolExecutor(max_workers=config.num_workers) as executor:
+            # executor.map applies the function to each row.
+            results = list(tqdm(executor.map(validate_with_keys, rows), total=len(rows)))
+    
+        # Filter out None values to get the list of non-readable IDs.
+        non_readable = [r for r in results if r is not None]
+        
+        print("Number of pdb files not read by Biopandas:",len(non_readable))
+        df = df[~df["unique_id"].isin(non_readable)].reset_index(drop=True)
+        print("\n")
+
+    else:
+        print("Skipping Biopandas validation..\n")
 
     """
     Analyse atom features
@@ -533,6 +566,7 @@ def parse_args():
     parser.add_argument('--activation_function', type=str, default='leaky_relu')
     parser.add_argument('--num_workers', type=int, default=0, help='Number of workers for graph generation')
     parser.add_argument('--device', type=str, default='auto', help='Device for computation: "auto" (use CUDA if available), "cpu" (force CPU), or a specific CUDA device index (e.g., "0").')
+    parser.add_argument('--skip_validation', action='store_true',help='Bypass Biopandas validation of protein structures.')
     
     args = parser.parse_args()
     return args
