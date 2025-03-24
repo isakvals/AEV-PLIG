@@ -1,6 +1,7 @@
 name: aev-plig
 channels:
   - defaults
+  - conda-forge
 dependencies:
   - ca-certificates=2024.7.2=hca03da5_0
   - libcxx=14.0.6=h848a8c0_0
@@ -16,6 +17,7 @@ dependencies:
   - wheel=0.43.0=py38hca03da5_0
   - xz=5.4.6=h80987f9_1
   - zlib=1.2.13=h18a0788_1
+  - openbabel
   - pip:
       - aiohttp==3.9.5
       - aiosignal==1.3.1
