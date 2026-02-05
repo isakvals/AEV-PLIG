@@ -369,7 +369,7 @@ def process_data(config):
                 else:
                     feature.append(0)
             
-            features.append(feature)
+                features.append(feature)
 
     features = pd.DataFrame(features, columns=["atom_symbol",
                                                 "num_heavy_atoms",
