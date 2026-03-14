@@ -130,3 +130,47 @@ class GraphDatasetPredict(InMemoryDataset):
 
         print('Graph construction done. Saving to file.')
         self.save(data_list, self.processed_paths[0])
+
+
+class GraphDatasetInference(InMemoryDataset):
+    def __init__(self, ids, graph_ids, graphs_dict, transform=None, pre_transform=None, log=False):
+        # Use an empty string or dummy path for root since we don't use disk I/O.
+        super(GraphDatasetInference, self).__init__(root='', transform=transform, pre_transform=pre_transform, log=log)
+        
+        # Process data in memory
+        data_list = self._process_data(ids, graph_ids, graphs_dict)
+        self.data, self.slices = self.collate(data_list)
+
+    def _process_data(self, ids, graph_ids, graphs_dict):
+        data_list = []
+        for i in range(len(ids)):
+            compound_name = ids[i]
+            graph_id = graph_ids[i]
+            c_size, features, edge_index, edge_features = graphs_dict[compound_name]
+         
+            data_point = Data(
+                x=torch.tensor(np.array(features), dtype=torch.float),
+                edge_index=torch.tensor(np.array(edge_index), dtype=torch.long).t().contiguous(),
+                edge_attr=torch.tensor(np.array(edge_features), dtype=torch.float),
+                y=torch.tensor([graph_id], dtype=torch.int)
+            )
+            data_list.append(data_point)
+        return data_list
+
+    @property
+    def raw_file_names(self):
+        # Not used since we're processing in memory
+        return []
+
+    @property
+    def processed_file_names(self):
+        # No processed files will be saved on disk.
+        return []
+
+    def download(self):
+        # Override to do nothing.
+        pass
+
+    def process(self):
+        # Override to do nothing; processing is handled in __init__.
+        pass

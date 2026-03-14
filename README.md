@@ -2,7 +2,7 @@
 
 AEV-PLIG is a GNN-based scoring function that predicts the binding affinity of a bound protein-ligand complex given its 3D structure. The paper is published in Nature's *Communications Chemistry* at [Narrowing the gap between machine learning scoring functions and free energy perturbation using augmented data](https://doi.org/10.1038/s42004-025-01428-y).
 
-AEV-PLIG was first published in [How to make machine learning scoring functions competitive with FEP](https://chemrxiv.org/engage/chemrxiv/article-details/6675a38d5101a2ffa8274f62), and received the [people's poster prize at the 7th AI in Chemistry Symposium](https://www.stats.ox.ac.uk/news/isak-valsson-wins-poster-prize). In the paper we benchmark AEV-PLIG on a wide range of benchmarks, including CASF-2016, our new out-of-distribution benchmark OOD Test, and a test set used for free energy perturbation (FEP) calculations, and highlight competitive performance accross the board. Moreover, we demonstrate how leveraging augmented data (generated using template-based modelling or molecular docking) can significantly improve binding affinity prediction correlation and ranking on the FEP benchmark (PCC and Kendall’s increases from 0.41 and 0.26, to 0.59 and 0.42), closing the performance gap with FEP calculations while being 400,000 times faster.
+AEV-PLIG was first published in [How to make machine learning scoring functions competitive with FEP](https://chemrxiv.org/engage/chemrxiv/article-details/6675a38d5101a2ffa8274f62), and received the [people's poster prize at the 7th AI in Chemistry Symposium](https://www.stats.ox.ac.uk/news/isak-valsson-wins-poster-prize). In the paper we benchmark AEV-PLIG on a wide range of benchmarks, including CASF-2016, our new out-of-distribution benchmark OOD Test, and a test set used for free energy perturbation (FEP) calculations, and highlight competitive performance accross the board. Moreover, we demonstrate how leveraging augmented data (generated using template-based modelling or molecular docking) can significantly improve binding affinity prediction correlation and ranking on the FEP benchmark (PCC and Kendall's increases from 0.41 and 0.26, to 0.59 and 0.42), closing the performance gap with FEP calculations while being 400,000 times faster.
 
 
 In this repo we demonstrate how to use AEV-PLIG for predictions and how to train your own AEV-PLIG model
@@ -101,3 +101,36 @@ The script then creates graphs and pytorch data to run the AEV-PLIG model specif
 The predictions are saved under *output/predictions/data_name_predictions.csv*
 
 For the example dataset, the script takes around 20 seconds to run
+
+### Docking Rescoring with AEV-PLIG
+The `rescore_docking.py` script allows you to conveniently **rescore docked ligands** using **AEV-PLIG**.  
+This script processes all ligands in a given directory and outputs a **CSV file with rescoring results**.
+
+#### Usage Example
+```python
+python rescore_docking.py -p protein.pdb -l docked_ligands/ --num_workers 8
+```
+
+#### Input Requirements
+- **Protein file** (`.pdb` (recommended), but `mol2` and `pdbqt` should also work).
+- **Docked ligand files** (preferably **SDF format** for highest accuracy).
+- **Mol2 (TRIPOS format) is also supported** via RDKit.
+- Other formats (**PDB, PDBQT, ...**) can be converted using automatically **OpenBabel**, but this may introduce minor inaccuracies.
+
+#### Best Practices for Accuracy
+- **Use SDF format** whenever possible to retain structural details.
+- **Ensure explicit hydrogens are present** (they should be included from docking).
+- If using automatic format conversion, manually verify ligand integrity to minimize errors.
+
+#### Command-Line Arguments
+
+| Argument               | Description |
+|------------------------|-------------|
+| `-p, --protein`        | Path to the input **protein file** (PDB or other formats convertible to PDB). |
+| `-l, --ligands`        | Path to the directory containing **ligand files** (e.g., SDF, MOL, MOL2). |
+| `--trained_model_name` | Name of the trained model used for rescoring. |
+| `--data_name`          | Identifier for the dataset (used for output file naming). |
+| `--output_dir`         | Directory where output files (graphs and predictions) will be saved. |
+| `-c, --num_workers`    | Number of parallel processes (**default: all available cores**). |
+| `--device`             | Computation device (`'auto'`, `'cpu'`, or a specific CUDA device index). |
+| `--debug`              | Provide more logging/debug information while running the calculations. |
