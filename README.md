@@ -86,7 +86,9 @@ In order to make predictions, the model requires a *.csv* file with the followin
 - *sdf_file*, relative path to the ligand *.sdf* file
 - *pdb_file*, relative path to the protein *.pdb* file
 
-An example dataset is included in *data/example_dataset.csv* for this demo.
+You can refer to *data/example_dataset.csv* for a sample input file.
+
+A typical prediction can be run as follows:
 
 ```
 python process_and_predict.py --dataset_csv=data/example_dataset.csv --data_name=example --trained_model_name=model_GATv2Net_ligsim90_fep_benchmark
@@ -98,6 +100,4 @@ The script processes data in *dataset_csv*, and removes datapoints if:
 
 The script then creates graphs and pytorch data to run the AEV-PLIG model specified with *trained_model_name*.
 
-The predictions are saved under *output/predictions/data_name_predictions.csv*
-
-For the example dataset, the script takes around 20 seconds to run
+The predictions would saved under *output/predictions/data_name_predictions.csv*
